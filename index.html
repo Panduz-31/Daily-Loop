@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f3f2fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1022" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Daily Loop">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Daily Loop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: one centered column. Header ring + summary, three tabs (Habits / To-do / Stats), settings and backup at the bottom. Each habit has its own colour. */
+:root {
+  --bg: #f3f2fb;
+  --surface: #ffffff;
+  --surface-2: #eae8f7;
+  --fg: #1d1b36;
+  --muted: #6a6888;
+  --line: #dedcf0;
+  --accent: #6a5cf5;
+  --accent-fg: #ffffff;
+  --accent-soft: #e8e5ff;
+  --done: #1fa971;
+  --warn: #c2570c;
+  --danger: #d03b4a;
+  --c0: #6a5cf5; --c1: #ee5568; --c2: #e8960f; --c3: #1fa971; --c4: #2a86e0; --c5: #d4489f;
+  --on-hc: #ffffff;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1022; --surface: #171a35; --surface-2: #212550; --fg: #ecebff; --muted: #9b9dc6; --line: #2b2f59;
+    --accent: #8f84ff; --accent-fg: #0e1022; --accent-soft: #25285a; --done: #4fd69c; --warn: #ffb066; --danger: #ff8a97;
+    --c0: #8f84ff; --c1: #ff7a8c; --c2: #ffbe55; --c3: #4fd69c; --c4: #5eb0ff; --c5: #f27cc6; --on-hc: #0e1022;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1022; --surface: #171a35; --surface-2: #212550; --fg: #ecebff; --muted: #9b9dc6; --line: #2b2f59;
+  --accent: #8f84ff; --accent-fg: #0e1022; --accent-soft: #25285a; --done: #4fd69c; --warn: #ffb066; --danger: #ff8a97;
+  --c0: #8f84ff; --c1: #ff7a8c; --c2: #ffbe55; --c3: #4fd69c; --c4: #5eb0ff; --c5: #f27cc6; --on-hc: #0e1022;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 56px; display: flex; flex-direction: column; gap: 20px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Header */
+.head-row { display: flex; align-items: center; gap: 16px; }
+.ring { position: relative; width: 72px; height: 72px; flex: none; }
+.ring svg { width: 100%; height: 100%; display: block; }
+.ring-bg { fill: none; stroke: var(--surface-2); stroke-width: 7; }
+.ring-fg { fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round; stroke-dasharray: 163.36; stroke-dashoffset: 163.36; transition: stroke-dashoffset .4s ease; }
+.ring.full .ring-fg { stroke: var(--done); }
+.ring span { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-mono); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.head-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.name-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; max-width: 100%; background: none; border: 0; padding: 0; text-align: left; color: var(--fg); }
+.name-btn .greet { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.name-btn .nm { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; font-family: var(--font-display); font-weight: 600; font-size: 17px; line-height: 1.2; overflow-wrap: anywhere; }
+.name-btn svg { width: 12px; height: 12px; flex: none; opacity: .6; }
+.name-btn:hover .nm { color: var(--accent); }
+.name-input { width: 100%; max-width: 200px; padding: 4px 8px; border: 1px solid var(--accent); border-radius: 8px; background: var(--surface); font-family: var(--font-display); font-size: 16px; font-weight: 600; }
+.date-box { margin-left: auto; align-self: flex-start; flex: none; min-width: 58px; padding: 8px 10px; text-align: center; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; display: flex; flex-direction: column; line-height: 1.1; }
+.date-box .dow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+.date-box .dom { font-family: var(--font-display); font-size: 26px; font-weight: 700; margin: 2px 0; font-variant-numeric: tabular-nums; }
+.date-box .mon { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 7vw, 40px); line-height: 1.05; margin: 0; letter-spacing: -0.02em; }
+.summary-text { color: var(--muted); font-size: 14px; }
+.summary-text b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Tabs */
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.tab { border: 0; background: transparent; padding: 10px 6px; border-radius: 10px; font-weight: 600; color: var(--muted); }
+.tab[aria-selected="true"] { background: var(--accent); color: var(--accent-fg); }
+.tab small { font-family: var(--font-mono); font-weight: 400; margin-left: 5px; font-size: 11px; opacity: .85; }
+
+.panel { display: flex; flex-direction: column; gap: 12px; }
+.panel[hidden] { display: none; }
+
+/* Forms */
+.add { display: flex; gap: 8px; flex-wrap: wrap; }
+.add input[type="text"] { flex: 1 1 200px; min-width: 0; }
+.field { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-width: 0; }
+.field::placeholder { color: var(--muted); }
+textarea.field { width: 100%; font-family: var(--font-mono); font-size: 12px; resize: vertical; min-height: 96px; }
+.btn { border: 0; background: var(--accent); color: var(--accent-fg); font-weight: 600; padding: 10px 16px; border-radius: 10px; }
+.btn.ghost { background: transparent; color: var(--muted); border: 1px solid var(--line); font-weight: 500; padding: 7px 12px; font-size: 13px; }
+.btn.ghost:hover { color: var(--fg); }
+.btn.danger { color: var(--danger); border-color: var(--danger); }
+
+.list { display: flex; flex-direction: column; gap: 10px; padding: 0; margin: 0; list-style: none; }
+
+/* Week navigation */
+.weeknav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.weeknav .label { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+.navbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; width: 38px; height: 34px; display: grid; place-items: center; color: var(--fg); }
+.dot:disabled { opacity: .35; cursor: default; }
+.navbtn:disabled { opacity: .35; cursor: default; }
+
+/* Habit cards */
+.habit { --hc: var(--c0); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 16px; align-items: center; }
+.habit-top { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
+.swatch { width: 12px; height: 12px; border-radius: 4px; background: var(--hc); margin-top: 6px; flex: none; }
+.habit-name { font-weight: 600; font-size: 16px; overflow-wrap: anywhere; }
+.habit-meta { display: flex; gap: 6px 12px; align-items: center; flex-wrap: wrap; margin-top: 3px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.habit-meta .streak { color: var(--hc); font-weight: 500; }
+.habit-meta .met { color: var(--done); font-weight: 500; }
+.week { display: flex; gap: 6px; }
+.day { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.day span { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-transform: uppercase; }
+.day.today span { color: var(--hc); font-weight: 500; }
+.dot { width: 34px; height: 34px; border-radius: 11px; border: 1.5px solid var(--line); background: var(--bg); display: grid; place-items: center; padding: 0; color: transparent; }
+.dot svg { width: 16px; height: 16px; }
+.dot[aria-pressed="true"] { background: var(--hc); border-color: var(--hc); color: var(--on-hc); }
+.day.today .dot[aria-pressed="false"] { border-color: var(--hc); }
+.habit-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 4px; }
+
+/* Habit edit form */
+.edit { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 10px; }
+.edit-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.edit-row input[type="text"] { flex: 1 1 180px; min-width: 0; }
+.swatches { display: flex; gap: 8px; }
+.sw { width: 28px; height: 28px; border-radius: 9px; border: 2px solid transparent; background: var(--hc); padding: 0; }
+.sw[aria-pressed="true"] { border-color: var(--fg); box-shadow: 0 0 0 2px var(--surface) inset; }
+
+/* To-do rows */
+.search { width: 100%; }
+.todo { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.check { width: 26px; height: 26px; border-radius: 8px; border: 1.5px solid var(--muted); background: transparent; display: grid; place-items: center; padding: 0; color: transparent; }
+.check svg { width: 14px; height: 14px; }
+.check[aria-pressed="true"] { background: var(--done); border-color: var(--done); color: var(--on-hc); }
+.todo-text { overflow-wrap: anywhere; }
+.todo.done .todo-text { color: var(--muted); text-decoration: line-through; }
+.todo-meta { display: flex; gap: 6px 8px; align-items: center; flex-wrap: wrap; margin-top: 3px; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.chip { padding: 1px 7px; border-radius: 99px; border: 1px solid var(--line); text-transform: uppercase; letter-spacing: 0.05em; }
+.chip.high { color: var(--danger); border-color: var(--danger); }
+.chip.medium { color: var(--warn); border-color: var(--warn); }
+.overdue { color: var(--danger); }
+.today-due { color: var(--warn); }
+.todo-actions { display: flex; gap: 2px; }
+.todo-edit { grid-column: 2 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+.todo-edit input { flex: 1 1 180px; min-width: 0; }
+.icon-btn { border: 0; background: transparent; color: var(--muted); padding: 6px 8px; border-radius: 8px; font-size: 13px; }
+.icon-btn:hover { color: var(--fg); background: var(--surface-2); }
+.icon-btn.confirm { color: var(--danger); font-weight: 600; }
+
+.filters { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.filters .spacer { flex: 1; }
+.pill { border: 1px solid var(--line); background: transparent; color: var(--muted); padding: 5px 12px; border-radius: 99px; font-size: 13px; }
+.pill[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+.empty { text-align: center; color: var(--muted); padding: 28px 16px; border: 1.5px dashed var(--line); border-radius: 16px; }
+
+/* Stats */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; min-width: 0; }
+.tile .k { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.tile .v { font-family: var(--font-display); font-weight: 700; font-size: 30px; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.tile .s { font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.card h2 { margin: 0; font-family: var(--font-display); font-size: 18px; }
+.card p.cap { margin: 0; font-size: 13px; color: var(--muted); }
+.chart { width: 100%; height: auto; display: block; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart text { fill: var(--muted); font-family: var(--font-mono); font-size: 10px; }
+.chart .b { fill: var(--accent); opacity: .55; }
+.chart .b.now { opacity: 1; }
+.chart .b.zero { fill: var(--surface-2); opacity: 1; }
+.rate { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 4px 10px; align-items: center; }
+.rate .nm { font-weight: 500; overflow-wrap: anywhere; grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 8px; }
+.rate .nm small { font-family: var(--font-mono); font-size: 11px; color: var(--muted); font-weight: 400; white-space: nowrap; }
+.rate .track { height: 8px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.rate .track i { display: block; height: 100%; border-radius: 99px; background: var(--hc); }
+.rate .pc { font-family: var(--font-mono); font-size: 12px; text-align: right; font-variant-numeric: tabular-nums; }
+.rates { display: flex; flex-direction: column; gap: 14px; }
+
+/* Journal */
+.jline { display: flex; align-items: center; gap: 10px; font-size: 14px; overflow-wrap: anywhere; }
+.jdot { flex: none; width: 10px; height: 10px; border-radius: 3px; background: var(--accent); }
+.jdot.task { border-radius: 50%; background: var(--done); }
+.moods { display: flex; gap: 8px; }
+.mood { flex: 1; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 0; font-size: 22px; line-height: 1; }
+.mood[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+textarea.jtext { font-family: var(--font-body); font-size: 15px; min-height: 160px; }
+.recent { display: flex; flex-direction: column; gap: 6px; }
+.rec { display: flex; align-items: center; gap: 10px; text-align: left; width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 12px; padding: 8px 10px; }
+.rec .d { flex: none; min-width: 54px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--muted); }
+.rec .s { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+@media (max-width: 480px) { .tab { padding: 8px 2px; font-size: 14px; } .tab small { display: block; margin: 0; } }
+
+/* Settings */
+details.settings { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 4px 14px; }
+details.settings summary { cursor: pointer; padding: 12px 0; font-weight: 600; }
+.set-body { display: flex; flex-direction: column; gap: 14px; padding-bottom: 14px; }
+.set-body h3 { margin: 0 0 6px; font-size: 13px; font-family: var(--font-mono); font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.seg { display: flex; gap: 6px; flex-wrap: wrap; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.status { font-size: 13px; color: var(--muted); min-height: 1.2em; margin: 0; }
+.note { font-size: 12.5px; color: var(--muted); margin: 0; }
+
+@media (max-width: 480px) {
+  .habit { grid-template-columns: 1fr; }
+  .week { justify-content: space-between; }
+  .day { flex: 1; }
+  .dot { width: 100%; max-width: 44px; height: 38px; }
+}
+@media (prefers-reduced-motion: reduce) { .ring-fg { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="head-row">
+      <div class="ring" id="ring">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><circle class="ring-bg" cx="32" cy="32" r="26"/><circle class="ring-fg" id="ring-fg" cx="32" cy="32" r="26" transform="rotate(-90 32 32)"/></svg>
+        <span id="ring-text"></span>
+      </div>
+      <div class="head-text">
+        <div id="name-slot"></div>
+        <h1>Daily Loop</h1>
+        <div class="summary-text" id="summary-text"></div>
+      </div>
+      <div class="date-box" id="date-box" aria-label="Today's date">
+        <span class="dow" id="date-dow"></span>
+        <span class="dom" id="date-dom"></span>
+        <span class="mon" id="date-mon"></span>
+      </div>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-habits" aria-selected="true" aria-controls="panel-habits">Habits<small id="count-habits"></small></button>
+    <button class="tab" role="tab" id="tab-todos" aria-selected="false" aria-controls="panel-todos">To-do<small id="count-todos"></small></button>
+    <button class="tab" role="tab" id="tab-stats" aria-selected="false" aria-controls="panel-stats">Stats</button>
+    <button class="tab" role="tab" id="tab-journal" aria-selected="false" aria-controls="panel-journal">Journal</button>
+  </div>
+
+  <section class="panel" id="panel-habits" role="tabpanel" aria-labelledby="tab-habits">
+    <form class="add" id="habit-form">
+      <input class="field" type="text" id="habit-input" placeholder="New habit, e.g. Stretch for 10 minutes" maxlength="60" aria-label="New habit name" autocomplete="off">
+      <select class="field" id="habit-goal" aria-label="Weekly goal">
+        <option value="7" selected>Every day</option>
+        <option value="6">6 days a week</option>
+        <option value="5">5 days a week</option>
+        <option value="4">4 days a week</option>
+        <option value="3">3 days a week</option>
+        <option value="2">2 days a week</option>
+        <option value="1">1 day a week</option>
+      </select>
+      <button class="btn" type="submit">Add habit</button>
+    </form>
+    <div class="weeknav">
+      <button class="navbtn" id="week-prev" type="button" aria-label="Previous week">&#8249;</button>
+      <span class="label" id="week-label"></span>
+      <button class="navbtn" id="week-next" type="button" aria-label="Next week">&#8250;</button>
+    </div>
+    <ul class="list" id="habit-list"></ul>
+  </section>
+
+  <section class="panel" id="panel-todos" role="tabpanel" aria-labelledby="tab-todos" hidden>
+    <form class="add" id="todo-form">
+      <input class="field" type="text" id="todo-input" placeholder="New task, e.g. Submit project report" maxlength="120" aria-label="New task" autocomplete="off">
+      <select class="field" id="todo-prio" aria-label="Priority">
+        <option value="low">Low</option>
+        <option value="medium" selected>Medium</option>
+        <option value="high">High</option>
+      </select>
+      <select class="field" id="todo-cat" aria-label="Category">
+        <option>Study</option>
+        <option>Personal</option>
+        <option>Work</option>
+        <option>Other</option>
+      </select>
+      <input class="field" type="date" id="todo-due" aria-label="Due date">
+      <button class="btn" type="submit">Add task</button>
+    </form>
+    <input class="field search" type="search" id="todo-search" placeholder="Search tasks" aria-label="Search tasks" autocomplete="off">
+    <div class="filters" id="filters">
+      <button class="pill" data-filter="all" aria-pressed="true">All</button>
+      <button class="pill" data-filter="open" aria-pressed="false">Open</button>
+      <button class="pill" data-filter="done" aria-pressed="false">Done</button>
+      <span class="spacer"></span>
+      <button class="btn ghost" id="clear-done" type="button">Clear completed</b
